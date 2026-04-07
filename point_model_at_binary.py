@@ -74,7 +74,11 @@ def point_model_at_binary(file_path: str):
             print(s[:120])
 
     print("\n=== CONNECTION HITS ===")
-    hits = [s for s in strings if any(term in s.lower() for term in CONNECTION_TERMS)]
+    hits = []
+    for s in strings:
+        lowered = s.lower()
+        if any(term in lowered for term in CONNECTION_TERMS):
+            hits.append(s)
     if hits:
         for hit in hits[:20]:
             print(hit[:120])
