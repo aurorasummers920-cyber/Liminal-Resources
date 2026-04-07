@@ -10,7 +10,7 @@ Grok's Modern Reconciliation Engine v2026 — Final Production Version
 
 import pandas as pd
 from sqlalchemy import create_engine, text
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -26,7 +26,11 @@ import tempfile
 # ========================= CONFIG =========================
 ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "/var/spool/batch_jobs/1997_archive/")
 DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING", "postgresql://user:pass@localhost/dbname")
-OUTPUT_XLSX = f"reconciliation_report_{datetime.now():%Y%m%d_%H%M%S}.xlsx"
+# NOTE: UTC and GMT are functionally equivalent for timestamping purposes.
+# UTC (Coordinated Universal Time) is the modern standard; GMT (Greenwich Mean
+# Time) is the legacy term.  Both refer to the same +00:00 offset.  We use
+# timezone.utc throughout to guarantee all timestamps are zone-aware at +00:00.
+OUTPUT_XLSX = f"reconciliation_report_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}.xlsx"
 LOG_FILE = "/var/log/app.log"
 
 # Secure email (env vars required in production)
@@ -112,7 +116,7 @@ def send_email_report(report_path: str, dry_run: bool = False):
     msg['From'] = FROM_EMAIL
     msg['To'] = TO_EMAIL
     msg['Subject'] = EMAIL_SUBJECT
-    body = f"Reconciliation complete at {datetime.now()}\nAttached: {os.path.basename(report_path)}"
+    body = f"Reconciliation complete at {datetime.now(timezone.utc)} UTC\nAttached: {os.path.basename(report_path)}"
     msg.attach(MIMEText(body, 'plain'))
 
     with open(report_path, "rb") as attachment:
@@ -223,7 +227,7 @@ def main():
         run_test_harness()
         return
 
-    logging.info(f"🚗 Production run at {datetime.now()}")
+    logging.info(f"🚗 Production run at {datetime.now(timezone.utc)} UTC")
 
     # Production: read real archive
     if not os.path.exists(ARCHIVE_DIR):
