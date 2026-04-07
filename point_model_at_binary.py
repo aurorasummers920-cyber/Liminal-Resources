@@ -3,6 +3,8 @@ import sys
 import math
 from pathlib import Path
 
+CONNECTION_TERMS = ("wizard vision", "wizard_vision")
+
 def entropy(data: bytes) -> float:
     """Shannon entropy — high = packed/encrypted/random"""
     if not data:
@@ -70,6 +72,14 @@ def point_model_at_binary(file_path: str):
     for s in strings[:40]:
         if len(s.strip()) > 3:
             print(s[:120])
+
+    print("\n=== CONNECTION HITS ===")
+    hits = [s for s in strings if any(term in s.lower() for term in CONNECTION_TERMS)]
+    if hits:
+        for hit in hits[:20]:
+            print(hit[:120])
+    else:
+        print("No wizard vision / wizard_vision strings found.")
 
     # Header hexdump
     print("\n=== HEADER HEXDUMP (first 256 bytes) ===")
