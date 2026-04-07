@@ -71,12 +71,14 @@ def create_mock_archive(tmp_dir: str):
     expected = []
     for i in range(3):
         filepath = os.path.join(tmp_dir, f"batch_{i+1:02d}.dat")
-        with open(filepath, 'w', encoding='cp037') as f:
+        with open(filepath, 'wb') as f:
             for j in range(80):
-                tx_id = f"TX{i*1000 + j:07d}"
+                tx_id = f"TX{i*1000 + j:06d}"
                 amount = Decimal('125.75') + (j % 17) * Decimal('10.00')
                 comment = f"Legacy comment for transaction {j} - ISPF style"
-                f.write(generate_mock_fixed_width_record(tx_id, amount, comment))
+                record = generate_mock_fixed_width_record(tx_id, amount, comment)
+                # Encode content as cp037 (EBCDIC) with ASCII newline separator
+                f.write(record.rstrip('\n').encode('cp037') + b'\n')
                 expected.append({'transaction_id': tx_id, 'amount': amount})
     logging.info(f"✅ Created mock archive with {len(expected)} records")
     return expected
@@ -94,6 +96,7 @@ def setup_mock_database(expected_records):
                 db_amount = rec['amount']
             conn.execute(text("INSERT INTO transactions VALUES (:id, :amt, 'PROCESSED')"),
                          {"id": rec['transaction_id'], "amt": float(db_amount)})
+        conn.commit()
     return engine
 
 # ======================= SECURE EMAIL =======================
@@ -158,9 +161,15 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
         result = conn.execute(text("SELECT transaction_id, amount AS db_amount, status FROM transactions"))
         df_db = pd.DataFrame(result.fetchall(), columns=['transaction_id', 'db_amount', 'status'])
 
-    df_reconciled = df_batch.merge(df_db, on='transaction_id', how='left')
-    df_reconciled['match'] = df_reconciled['amount'] == df_reconciled['db_amount'].fillna(0)
-    df_reconciled['discrepancy'] = df_reconciled['amount'] - df_reconciled.get('db_amount', 0)
+    if df_batch.empty:
+        df_reconciled = pd.DataFrame(columns=['transaction_id', 'amount', 'comment', 'source_file',
+                                              'db_amount', 'status', 'match', 'discrepancy'])
+    else:
+        # Convert Decimal amounts to float for consistent numeric operations
+        df_batch['amount'] = df_batch['amount'].astype(float)
+        df_reconciled = df_batch.merge(df_db, on='transaction_id', how='left')
+        df_reconciled['match'] = df_reconciled['amount'] == df_reconciled['db_amount'].fillna(0)
+        df_reconciled['discrepancy'] = df_reconciled['amount'] - df_reconciled['db_amount'].fillna(0)
 
     # PROMETHEUS INSTRUMENTATION
     if PROMETHEUS_AVAILABLE:
@@ -170,8 +179,9 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
 
     with pd.ExcelWriter(output_xlsx, engine='openpyxl') as writer:
         df_reconciled.to_excel(writer, sheet_name='Reconciliation', index=False)
-        summary = df_reconciled.groupby('match').agg({'transaction_id': 'count', 'discrepancy': 'sum'})
-        summary.to_excel(writer, sheet_name='Summary')
+        if not df_reconciled.empty:
+            summary = df_reconciled.groupby('match').agg({'transaction_id': 'count', 'discrepancy': 'sum'})
+            summary.to_excel(writer, sheet_name='Summary')
 
     logging.info(f"✅ Report generated: {output_xlsx}")
     return df_reconciled
