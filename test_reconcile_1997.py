@@ -345,11 +345,14 @@ class TestRunReconciliation:
         assert df.iloc[0]["transaction_id"] == "TX000001"
 
     def test_empty_archive_directory(self, tmp_archive, in_memory_db):
-        """Empty archive directory produces an empty dataframe."""
+        """Empty archive directory produces an empty dataframe with both report sheets."""
         output_xlsx = os.path.join(tmp_archive, "report.xlsx")
         df = rec.run_reconciliation(tmp_archive, in_memory_db, output_xlsx)
         assert len(df) == 0
         assert os.path.exists(output_xlsx)
+        xl = pd.ExcelFile(output_xlsx)
+        assert "Reconciliation" in xl.sheet_names
+        assert "Summary" in xl.sheet_names
 
     def test_malformed_amount_defaults_to_zero(self, tmp_archive, in_memory_db):
         """Non-numeric amount fields default to 0.0 after conversion."""

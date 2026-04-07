@@ -165,7 +165,7 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
         df_reconciled = pd.DataFrame(columns=['transaction_id', 'amount', 'comment', 'source_file',
                                               'db_amount', 'status', 'match', 'discrepancy'])
     else:
-        # Convert Decimal amounts to float for consistent numeric operations
+        # Convert Decimal amounts to float for consistent numeric operations with DB floats
         df_batch['amount'] = df_batch['amount'].astype(float)
         df_reconciled = df_batch.merge(df_db, on='transaction_id', how='left')
         df_reconciled['match'] = df_reconciled['amount'] == df_reconciled['db_amount'].fillna(0)
@@ -181,7 +181,9 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
         df_reconciled.to_excel(writer, sheet_name='Reconciliation', index=False)
         if not df_reconciled.empty:
             summary = df_reconciled.groupby('match').agg({'transaction_id': 'count', 'discrepancy': 'sum'})
-            summary.to_excel(writer, sheet_name='Summary')
+        else:
+            summary = pd.DataFrame(columns=['transaction_id', 'discrepancy'])
+        summary.to_excel(writer, sheet_name='Summary')
 
     logging.info(f"✅ Report generated: {output_xlsx}")
     return df_reconciled
