@@ -10,7 +10,7 @@ Grok's Modern Reconciliation Engine v2026 — Final Production Version
 
 import pandas as pd
 from sqlalchemy import create_engine, text
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -26,7 +26,7 @@ import tempfile
 # ========================= CONFIG =========================
 ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "/var/spool/batch_jobs/1997_archive/")
 DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING", "postgresql://user:pass@localhost/dbname")
-OUTPUT_XLSX = f"reconciliation_report_{datetime.now():%Y%m%d_%H%M%S}.xlsx"
+OUTPUT_XLSX = f"reconciliation_report_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}.xlsx"
 LOG_FILE = "/var/log/app.log"
 
 # Secure email (env vars required in production)
@@ -37,6 +37,11 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 FROM_EMAIL = os.getenv("FROM_EMAIL", EMAIL_USER)
 TO_EMAIL = os.getenv("TO_EMAIL", "finance@company.com")
 EMAIL_SUBJECT = "1997 Archive Reconciliation Report"
+
+# ======================= LOGGER =======================
+logging.basicConfig(level=logging.INFO)
+handler = RotatingFileHandler(LOG_FILE, maxBytes=10*1024*1024, backupCount=5)
+logging.getLogger().addHandler(handler)
 
 # ======================= PROMETHEUS (PRIORITY) =======================
 PROMETHEUS_AVAILABLE = False
@@ -53,11 +58,6 @@ try:
     logging.info("✅ Prometheus metrics enabled")
 except ImportError:
     logging.warning("prometheus-client not installed — metrics disabled (pip install prometheus-client)")
-
-# ======================= LOGGER =======================
-logging.basicConfig(level=logging.INFO)
-handler = RotatingFileHandler(LOG_FILE, maxBytes=10*1024*1024, backupCount=5)
-logging.getLogger().addHandler(handler)
 
 # ======================= MOCK DATA & TEST HARNESS =======================
 def generate_mock_fixed_width_record(tx_id: str, amount: Decimal, comment: str) -> str:
@@ -109,7 +109,7 @@ def send_email_report(report_path: str, dry_run: bool = False):
     msg['From'] = FROM_EMAIL
     msg['To'] = TO_EMAIL
     msg['Subject'] = EMAIL_SUBJECT
-    body = f"Reconciliation complete at {datetime.now()}\nAttached: {os.path.basename(report_path)}"
+    body = f"Reconciliation complete at {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S UTC}\nAttached: {os.path.basename(report_path)}"
     msg.attach(MIMEText(body, 'plain'))
 
     with open(report_path, "rb") as attachment:
@@ -147,7 +147,7 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
                 comment = line_str[24:80].strip()
                 try:
                     amount = Decimal(amount_packed.replace(',', '').replace(' ', '')) or Decimal('0')
-                except:
+                except (ValueError, ArithmeticError):
                     amount = Decimal('0')
                 data.append({'transaction_id': tx_id, 'amount': amount, 'comment': comment, 'source_file': file})
 
@@ -211,7 +211,7 @@ def main():
         run_test_harness()
         return
 
-    logging.info(f"🚗 Production run at {datetime.now()}")
+    logging.info(f"🚗 Production run at {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S UTC}")
 
     # Production: read real archive
     if not os.path.exists(ARCHIVE_DIR):
@@ -221,7 +221,8 @@ def main():
     # Connect to real DB
     try:
         db_engine = create_engine(DB_CONNECTION_STRING)
-        db_engine.connect().close()  # Test connection
+        with db_engine.connect() as conn:
+            pass  # Test connection
     except Exception as e:
         logging.error(f"❌ Database connection failed: {e}")
         return
