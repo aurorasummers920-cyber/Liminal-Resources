@@ -401,7 +401,7 @@ class TestRunReconciliation:
         output_xlsx = os.path.join(tmp_archive, "report.xlsx")
         df = rec.run_reconciliation(tmp_archive, engine, output_xlsx)
         assert len(df) == 1
-        assert df.iloc[0]["match"] is True or df.iloc[0]["match"] == True
+        assert df.iloc[0]["match"]
 
     def test_amount_parsing_catches_specific_exceptions(self, tmp_archive, in_memory_db):
         """Malformed amounts raise ValueError/ArithmeticError, not bare except."""
