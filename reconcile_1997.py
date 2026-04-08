@@ -154,7 +154,7 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
                 comment = line_str[24:80].strip()
                 try:
                     amount = Decimal(amount_packed.replace(',', '').replace(' ', '')) or Decimal('0')
-                except:
+                except (ValueError, ArithmeticError):
                     amount = Decimal('0')
                 data.append({'transaction_id': tx_id, 'amount': amount, 'comment': comment, 'source_file': file})
 
@@ -172,8 +172,8 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
         # Convert Decimal amounts to float for consistent numeric operations with DB floats
         df_batch['amount'] = df_batch['amount'].astype(float)
         df_reconciled = df_batch.merge(df_db, on='transaction_id', how='left')
-        df_reconciled['match'] = df_reconciled['amount'] == df_reconciled['db_amount'].fillna(0)
         df_reconciled['discrepancy'] = df_reconciled['amount'] - df_reconciled['db_amount'].fillna(0)
+        df_reconciled['match'] = df_reconciled['discrepancy'].abs() < 0.005
 
     # PROMETHEUS INSTRUMENTATION
     if PROMETHEUS_AVAILABLE:
@@ -237,7 +237,8 @@ def main():
     # Connect to real DB
     try:
         db_engine = create_engine(DB_CONNECTION_STRING)
-        db_engine.connect().close()  # Test connection
+        with db_engine.connect() as conn:
+            pass  # Test connection
     except Exception as e:
         logging.error(f"❌ Database connection failed: {e}")
         return
