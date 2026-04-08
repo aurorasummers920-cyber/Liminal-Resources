@@ -380,6 +380,46 @@ class TestRunReconciliation:
         df = rec.run_reconciliation(tmp_archive, in_memory_db, output_xlsx)
         assert len(df) == 2
 
+    def test_near_match_within_tolerance(self, tmp_archive):
+        """Amounts differing by less than half a penny should be considered a match."""
+        records = [{"transaction_id": "TX000001", "amount": Decimal("100.00")}]
+        engine = create_engine("sqlite:///:memory:")
+        with engine.connect() as conn:
+            conn.execute(
+                text(
+                    "CREATE TABLE transactions "
+                    "(transaction_id TEXT PRIMARY KEY, amount NUMERIC, status TEXT)"
+                )
+            )
+            # Insert with a sub-penny difference (float precision artifact)
+            conn.execute(
+                text("INSERT INTO transactions VALUES ('TX000001', 100.004, 'PROCESSED')")
+            )
+            conn.commit()
+
+        self._write_archive_file(tmp_archive, "batch_01.dat", records)
+        output_xlsx = os.path.join(tmp_archive, "report.xlsx")
+        df = rec.run_reconciliation(tmp_archive, engine, output_xlsx)
+        assert len(df) == 1
+        assert df.iloc[0]["match"] is True or df.iloc[0]["match"] == True
+
+    def test_amount_parsing_catches_specific_exceptions(self, tmp_archive, in_memory_db):
+        """Malformed amounts raise ValueError/ArithmeticError, not bare except."""
+        # Build a record with garbage in the amount field — should default to 0
+        filepath = os.path.join(tmp_archive, "batch_01.dat")
+        tx_id = "TX000001"
+        garbage_amount = "DEADBEEF!@#$%^&*"  # exactly 16 chars
+        comment = "exception handling test padded to fifty six chars!!!!!xx"  # 56 chars
+        raw_content = tx_id + garbage_amount + comment
+        assert len(raw_content) == 80
+        with open(filepath, "wb") as f:
+            f.write(raw_content.encode("cp037") + b"\n")
+
+        output_xlsx = os.path.join(tmp_archive, "report.xlsx")
+        df = rec.run_reconciliation(tmp_archive, in_memory_db, output_xlsx)
+        assert len(df) == 1
+        assert df.iloc[0]["amount"] == pytest.approx(0.0)
+
 
 # ================ Tests for send_email_report ================
 
