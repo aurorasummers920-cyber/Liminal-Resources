@@ -10,7 +10,7 @@ Grok's Modern Reconciliation Engine v2026 — Final Production Version
 
 import pandas as pd
 from sqlalchemy import create_engine, text
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -26,7 +26,11 @@ import tempfile
 # ========================= CONFIG =========================
 ARCHIVE_DIR = os.getenv("ARCHIVE_DIR", "/var/spool/batch_jobs/1997_archive/")
 DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING", "postgresql://user:pass@localhost/dbname")
-OUTPUT_XLSX = f"reconciliation_report_{datetime.now():%Y%m%d_%H%M%S}.xlsx"
+# NOTE: UTC and GMT are functionally equivalent for timestamping purposes.
+# UTC (Coordinated Universal Time) is the modern standard; GMT (Greenwich Mean
+# Time) is the legacy term.  Both refer to the same +00:00 offset.  We use
+# timezone.utc throughout to guarantee all timestamps are zone-aware at +00:00.
+OUTPUT_XLSX = f"reconciliation_report_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}.xlsx"
 LOG_FILE = "/var/log/app.log"
 
 # Secure email (env vars required in production)
@@ -71,12 +75,14 @@ def create_mock_archive(tmp_dir: str):
     expected = []
     for i in range(3):
         filepath = os.path.join(tmp_dir, f"batch_{i+1:02d}.dat")
-        with open(filepath, 'w', encoding='cp037') as f:
+        with open(filepath, 'wb') as f:
             for j in range(80):
-                tx_id = f"TX{i*1000 + j:07d}"
+                tx_id = f"TX{i*1000 + j:06d}"
                 amount = Decimal('125.75') + (j % 17) * Decimal('10.00')
                 comment = f"Legacy comment for transaction {j} - ISPF style"
-                f.write(generate_mock_fixed_width_record(tx_id, amount, comment))
+                record = generate_mock_fixed_width_record(tx_id, amount, comment)
+                # Encode content as cp037 (EBCDIC) with ASCII newline separator
+                f.write(record.rstrip('\n').encode('cp037') + b'\n')
                 expected.append({'transaction_id': tx_id, 'amount': amount})
     logging.info(f"✅ Created mock archive with {len(expected)} records")
     return expected
@@ -94,6 +100,7 @@ def setup_mock_database(expected_records):
                 db_amount = rec['amount']
             conn.execute(text("INSERT INTO transactions VALUES (:id, :amt, 'PROCESSED')"),
                          {"id": rec['transaction_id'], "amt": float(db_amount)})
+        conn.commit()
     return engine
 
 # ======================= SECURE EMAIL =======================
@@ -109,7 +116,7 @@ def send_email_report(report_path: str, dry_run: bool = False):
     msg['From'] = FROM_EMAIL
     msg['To'] = TO_EMAIL
     msg['Subject'] = EMAIL_SUBJECT
-    body = f"Reconciliation complete at {datetime.now()}\nAttached: {os.path.basename(report_path)}"
+    body = f"Reconciliation complete at {datetime.now(timezone.utc)} UTC\nAttached: {os.path.basename(report_path)}"
     msg.attach(MIMEText(body, 'plain'))
 
     with open(report_path, "rb") as attachment:
@@ -158,9 +165,15 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
         result = conn.execute(text("SELECT transaction_id, amount AS db_amount, status FROM transactions"))
         df_db = pd.DataFrame(result.fetchall(), columns=['transaction_id', 'db_amount', 'status'])
 
-    df_reconciled = df_batch.merge(df_db, on='transaction_id', how='left')
-    df_reconciled['match'] = df_reconciled['amount'] == df_reconciled['db_amount'].fillna(0)
-    df_reconciled['discrepancy'] = df_reconciled['amount'] - df_reconciled.get('db_amount', 0)
+    if df_batch.empty:
+        df_reconciled = pd.DataFrame(columns=['transaction_id', 'amount', 'comment', 'source_file',
+                                              'db_amount', 'status', 'match', 'discrepancy'])
+    else:
+        # Convert Decimal amounts to float for consistent numeric operations with DB floats
+        df_batch['amount'] = df_batch['amount'].astype(float)
+        df_reconciled = df_batch.merge(df_db, on='transaction_id', how='left')
+        df_reconciled['match'] = df_reconciled['amount'] == df_reconciled['db_amount'].fillna(0)
+        df_reconciled['discrepancy'] = df_reconciled['amount'] - df_reconciled['db_amount'].fillna(0)
 
     # PROMETHEUS INSTRUMENTATION
     if PROMETHEUS_AVAILABLE:
@@ -170,7 +183,10 @@ def run_reconciliation(archive_dir: str, db_engine, output_xlsx: str):
 
     with pd.ExcelWriter(output_xlsx, engine='openpyxl') as writer:
         df_reconciled.to_excel(writer, sheet_name='Reconciliation', index=False)
-        summary = df_reconciled.groupby('match').agg({'transaction_id': 'count', 'discrepancy': 'sum'})
+        if not df_reconciled.empty:
+            summary = df_reconciled.groupby('match').agg({'transaction_id': 'count', 'discrepancy': 'sum'})
+        else:
+            summary = pd.DataFrame(columns=['transaction_id', 'discrepancy'])
         summary.to_excel(writer, sheet_name='Summary')
 
     logging.info(f"✅ Report generated: {output_xlsx}")
@@ -211,7 +227,7 @@ def main():
         run_test_harness()
         return
 
-    logging.info(f"🚗 Production run at {datetime.now()}")
+    logging.info(f"🚗 Production run at {datetime.now(timezone.utc)} UTC")
 
     # Production: read real archive
     if not os.path.exists(ARCHIVE_DIR):

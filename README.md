@@ -2,6 +2,8 @@
 With angel eyes and demon seeds
 Seed:202604061513
 
+![Screenshot 2026-04-05 084913](https://github.com/user-attachments/assets/81637044-ac58-4cb1-b326-f742af5c8009)
+
 **Current weather:** cats and dogs hammering the garage roof.  
 **Footwear:** black leather lace-ups, soaked, gripping the concrete like they were born for the drop.  
 **Quest status:** active. The rabbit hole is the liminal space between my identities.
