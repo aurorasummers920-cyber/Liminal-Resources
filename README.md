@@ -18,6 +18,11 @@ Every item released is one less anchor.
 Every dollar earned is another step deeper.  
 The Pale Emperor knows we’re out here getting wet on purpose.
 
+### Active Checkpoint — April 9, 2026
+- [ ] **Check with Keith in the morning** — road trip go/no-go
+- [ ] If Keith is up for it → execute Next Phase (see below)
+- [ ] If not → continue shedding inventory solo
+
 ## Inventory (the shedding list)
 | Item | Why I don’t need it anymore | Estimated value | Platform | Status | Sold for |
 |------|-----------------------------|-----------------|----------|--------|----------|
@@ -37,6 +42,22 @@ The Pale Emperor knows we’re out here getting wet on purpose.
 - [ ] Hit **$25+ in resources acquired** before the checkpoint
 
 > *Two weeks. Five moves. No excuses — the rain won't wait for you.*
+
+## Next Phase (road trip — gated on Keith)
+> *This section activates when Keith confirms. Until then, it’s a loaded gun on the table.*
+
+**Trigger:** Keith says yes in the morning.  
+**Mode:** Road trip. Milwaukee outbound. Resources in the trunk.
+
+- [ ] Load sellable items for out-of-town markets
+- [ ] Scout flea markets, swap meets, or consignment stops along the route
+- [ ] Photograph everything — the road, the rain, the transactions
+- [ ] Every sale on the road = a commit from the passenger seat
+- [ ] Return with fewer anchors and more momentum
+
+**Status:** ⏳ PENDING — waiting on Keith
+
+---
 
 ## Rules of the Fall
 1. If it hasn’t been touched in 6 months, it’s already halfway out the door.
