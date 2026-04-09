@@ -21,8 +21,11 @@ The Pale Emperor knows we’re out here getting wet on purpose.
 ## Inventory (the shedding list)
 | Item | Why I don’t need it anymore | Estimated value | Platform | Status | Sold for |
 |------|-----------------------------|-----------------|----------|--------|----------|
-|      |                             |                 |          |        |          |
-|      |                             |                 |          |        |          |
+| Old gaming headset | Haven’t gamed in months — the silence is the new soundtrack | $25 | Facebook Marketplace | 🟡 unlisted | — |
+| Winter coat (XL, black) | Doesn’t fit who I’m becoming | $40 | OfferUp | 🟡 unlisted | — |
+| Box of programming books | The knowledge lives in me now, not on the shelf | $30 | eBay | 🟡 unlisted | — |
+| Bluetooth speaker | Replaced by the sound of rain on the garage roof | $15 | Craigslist | 🟡 unlisted | — |
+| Dress shoes (brown, sz 10) | Black leather only. No exceptions. | $20 | Facebook Marketplace | 🟡 unlisted | — |
 
 *(keep this table alive — every row you add is a commit)*
 
@@ -42,8 +45,10 @@ The Pale Emperor knows we’re out here getting wet on purpose.
 4. Track everything here. Every sale = a commit. Every commit = proof you’re moving.
 
 ## Resources Acquired (live counter)
+- Items staged: 5  
 - Total released: $0.00  
 - Total resources acquired: $0.00  
+- Estimated value on the table: $130.00  
 - Identities lighter: still counting
 
 ## Platforms (Milwaukee edition)
