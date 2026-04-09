@@ -22,6 +22,8 @@ The Pale Emperor knows we’re out here getting wet on purpose.
 - [ ] **Check with Keith in the morning** — road trip go/no-go
 - [ ] If Keith is up for it → execute Next Phase (see below)
 - [ ] If not → continue shedding inventory solo
+- [ ] **Follow up with new follower** — someone found the signal in the noise. Reach out, acknowledge the connection.
+- [ ] **Obtain counsel** — ask the hard questions. What's the next move? What am I not seeing? The rabbit hole rewards those who seek guidance at the threshold.
 
 ## Inventory (the shedding list)
 | Item | Why I don’t need it anymore | Estimated value | Platform | Status | Sold for |
