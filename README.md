@@ -59,6 +59,28 @@ The Pale Emperor knows we’re out here getting wet on purpose.
 
 ---
 
+## Callback: Summer 2023
+> *Where the thread goes cold, the story actually starts.*
+
+Summer 2023 was the last time the anchors felt optional.  
+The stuff piling up now — the headset, the coat, the brown dress shoes — most of it landed in this life between then and now.  
+Collected during the transition. Carried through the identity shift.  
+Dead weight that was *useful weight* once, before the direction changed.
+
+**What that summer had:**
+- Motion without a fixed destination
+- The sense that shedding was possible, not just theoretical
+- A version of this that hadn't calcified yet
+
+**What this quest is:**
+- The callback. The return receipt.
+- Picking up the thread from Summer 2023 and pulling it through April 2026 rain.
+- Every item released is a reply to that summer: *still moving. still becoming.*
+
+> *The liminal space between identities isn't empty — it's full of stuff you meant to sell in 2023.*
+
+---
+
 ## Rules of the Fall
 1. If it hasn’t been touched in 6 months, it’s already halfway out the door.
 2. Photograph it wet if you can. The liminal looks better soaked.
