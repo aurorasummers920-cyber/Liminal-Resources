@@ -28,6 +28,8 @@ The Pale Emperor knows we’re out here getting wet on purpose.
 #### 📡 Signal Received — April 9, 2026 (early)
 > *The counsel arrived before the ask. That's how you know it's real.*
 
+![Signal received — optimum footwear not required](https://github.com/user-attachments/assets/d74e8932-83c3-4ae6-bd14-499bfa49fbbc)
+
 **Source:** Booz Allen Hamilton (via Avature)  
 **Status:** 🟢 Response received  
 **Timestamp:** April 9, 2026 — afternoon, ahead of schedule  
